@@ -1,4 +1,3 @@
-
 version: 2
 jobs:
   test:
@@ -10,7 +9,7 @@ jobs:
           key: hcsp-{{ checksum "pom.xml" }}
       - run:
           name: Run Maven verify
-          command: mvn clean verify -PmavenCentral
+          command: mvn clean test
       - save_cache: # saves the project dependencies
           paths:
             - ~/.m2:
