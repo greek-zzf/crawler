@@ -22,9 +22,8 @@ public class Crawler {
         HttpGet httpGet = new HttpGet(URL);
 
         try (CloseableHttpResponse response = httpclient.execute(httpGet)) {
-            System.out.println(response.getStatusLine());
             HttpEntity entity = response.getEntity();
-            System.out.println(EntityUtils.toString(entity));
+            EntityUtils.consume(entity);
         }
 
 

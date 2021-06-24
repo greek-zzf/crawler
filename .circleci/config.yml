@@ -12,7 +12,6 @@ jobs:
           command: mvn clean test
       - save_cache: # saves the project dependencies
           paths: ~/.m2
-#            - ~/.m2:
           key: hcsp-{{ checksum "pom.xml" }}
 workflows:
   version: 2
