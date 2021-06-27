@@ -37,55 +37,72 @@ public class Crawler {
                 break;
             }
 
+            // 列表使用 ArrayList，末尾删除元素效率较高
             String link = LINKS_POOL.remove(LINKS_POOL.size() - 1);
 
+            // 如果是处理过的链接，跳出本次循环
             if (PROCESSED_LINKS.contains(link)) {
                 continue;
             }
 
-            if (!link.contains("sina.cn")) {
-                continue;
+            // 如果是需要的新闻链接，则继续执行，否则跳出本次循环
+            if (isInterestingLink(link)) {
 
-            } else {
+                Document doc = httpGetAndParseHtml(link);
+                // 添加链接到链接池中
+                doc.select("a[href]").forEach(element -> LINKS_POOL.add(element.attr("href")));
 
-                CloseableHttpClient httpclient = HttpClients.createDefault();
-                HttpGet httpGet = new HttpGet(link);
-                httpGet.addHeader(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36");
-
-                try (CloseableHttpResponse response = httpclient.execute(httpGet)) {
-                    HttpEntity entity = response.getEntity();
-
-                    System.out.println(link);
-                    System.out.println(response.getStatusLine());
-
-                    String html = EntityUtils.toString(entity);
-                    Document doc = Jsoup.parse(html);
-
-                    Elements elements = doc.select("a[href]");
-
-                    for (Element element : elements) {
-                        String hrefLink = element.attr("href");
-
-                        if (hrefLink.contains("news.sina.cn")) {
-                            LINKS_POOL.add(hrefLink);
-                        }
-
-                    }
-
-                    Elements articleTag = doc.select("article");
-                    if (!articleTag.isEmpty()) {
-                        for (Element element : articleTag) {
-                            System.out.println(element.child(0).text());
-                        }
-                    }
-
-                    PROCESSED_LINKS.add(link);
-                }
+                // 如果是新闻页面就插入到数据库
+                storeIntoDatabaseIfItIsNewsPage(doc);
+                PROCESSED_LINKS.add(link);
             }
 
         }
 
 
+    }
+
+    private static void storeIntoDatabaseIfItIsNewsPage(Document doc) {
+        Elements articleTag = doc.select("article");
+        if (!articleTag.isEmpty()) {
+            for (Element element : articleTag) {
+                System.out.println(element.child(0).text());
+            }
+        }
+    }
+
+    private static Document httpGetAndParseHtml(String link) {
+
+        CloseableHttpClient httpclient = HttpClients.createDefault();
+        HttpGet httpGet = new HttpGet(link);
+        httpGet.addHeader(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36");
+
+        try (CloseableHttpResponse response = httpclient.execute(httpGet)) {
+            HttpEntity entity = response.getEntity();
+
+            System.out.println(link);
+            System.out.println(response.getStatusLine());
+
+            String html = EntityUtils.toString(entity);
+            return Jsoup.parse(html);
+        }
+    }
+
+
+    private static boolean isInterestingLink(String link) {
+        return (isIndexPage(link) || isNewsPage(link)) && isNotLoginPage(link);
+    }
+
+    private static boolean isNotLoginPage(String link) {
+        return !link.contains("passport.sina.cn");
+    }
+
+    private static boolean isNewsPage(String link) {
+        return link.contains("news.sina.cn");
+    }
+
+    private static boolean isIndexPage(String link) {
+        return link.equals("https://sina.cn");
     }
 
 }
