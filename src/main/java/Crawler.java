@@ -71,7 +71,7 @@ public class Crawler {
         }
     }
 
-    private static Document httpGetAndParseHtml(String link) {
+    private static Document httpGetAndParseHtml(String link) throws IOException {
 
         CloseableHttpClient httpclient = HttpClients.createDefault();
         HttpGet httpGet = new HttpGet(link);
