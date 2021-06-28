@@ -11,6 +11,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -22,45 +23,91 @@ import java.util.Set;
  */
 public class Crawler {
 
-    private static final String URL = "https://sina.cn";
-    private static final List<String> LINKS_POOL = new ArrayList<>();
-    private static final Set<String> PROCESSED_LINKS = new HashSet<>();
+    private static List<String> linkPool = null;
+    private static final Set<String> processed_Links = new HashSet<>();
 
 
-    public static void main(String[] args) throws IOException {
+    private static List<String> loadUrlsFromDatabase(Connection connection, String sql) throws SQLException {
+        List<String> results = new ArrayList<>();
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                System.out.println(resultSet.getString("1"));
+                results.add(resultSet.getString("1"));
+            }
+        }
+        return results;
+    }
 
-        LINKS_POOL.add(URL);
+    public static void main(String[] args) throws IOException, SQLException {
+        Connection connection = DriverManager.getConnection("jdbc:h2:file:./news", "root", "root");
+
+        // 从数据库中获取需要处理的链接
+        linkPool = loadUrlsFromDatabase(connection, "SELECT link FROM LINKS_TO_BE_PROCESSED");
+
+        // 从数据库中获取已经处理过的连接池
+        Set<String> processedLink = new HashSet<>(loadUrlsFromDatabase(connection, "SELECT link FROM LINKS_ALREADY_PROCESSED"));
 
         while (true) {
 
-            if (LINKS_POOL.isEmpty()) {
+            if (linkPool.isEmpty()) {
                 break;
             }
 
-            // 列表使用 ArrayList，末尾删除元素效率较高
-            String link = LINKS_POOL.remove(LINKS_POOL.size() - 1);
-
-            // 如果是处理过的链接，跳出本次循环
-            if (PROCESSED_LINKS.contains(link)) {
-                continue;
+            // 删除已经处理（包括数据库）的链接
+            String link = linkPool.remove(linkPool.size() - 1);
+            try (PreparedStatement statement = connection.prepareStatement("DELETE FROM LINKS_TO_BE_PROCESSED WHERE link = ?")) {
+                statement.setString(1, link);
+                statement.executeUpdate();
             }
 
-            // 如果是需要的新闻链接，则继续执行，否则跳出本次循环
-            if (isInterestingLink(link)) {
+
+            // 判断链接是否被处理
+
+            boolean isProcessed = false;
+            List<String> results = new ArrayList<>();
+            try (PreparedStatement statement = connection.prepareStatement("SELECT link FORM LINKS_ALREADY_PROCESSED WHERE link = ?")) {
+                statement.setString(1, link);
+                ResultSet resultSet = statement.executeQuery();
+                while (resultSet.next()) {
+                    isProcessed = true;
+                }
+            }
+
+            // 如果不是处理过的链接
+            if (!isProcessed && isInterestingLink(link)) {
+
 
                 Document doc = httpGetAndParseHtml(link);
-                // 添加链接到链接池中
-                doc.select("a[href]").forEach(element -> LINKS_POOL.add(element.attr("href")));
+                // 添加链接到链接池中（包括数据库）
+                for (Element element : doc.select("a[href]")) {
+                    linkPool.add(element.attr("href"));
+                    try (PreparedStatement statement = connection.prepareStatement("INSERT INTO LINKS_TO_BE_PROCESSED (link) VALUES(?)")) {
+                        statement.setString(1, link);
+                        statement.executeUpdate();
+                    }
+                }
 
                 // 如果是新闻页面就插入到数据库
                 storeIntoDatabaseIfItIsNewsPage(doc);
-                PROCESSED_LINKS.add(link);
+
+
+                // 处理完成的链接放到已处理的池子中(包括数据库)
+
+                processed_Links.add(link);
+                try (PreparedStatement statement = connection.prepareStatement("INSERT INTO LINKS_ALREADY_PROCESSED (link) VALUES(?)")) {
+                    statement.setString(1, link);
+                    statement.executeUpdate();
+                }
+
             }
+
 
         }
 
 
     }
+
 
     private static void storeIntoDatabaseIfItIsNewsPage(Document doc) {
         Elements articleTag = doc.select("article");

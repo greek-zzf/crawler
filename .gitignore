@@ -26,3 +26,4 @@ target/
 test/
 *.iml
 .idea/
+*.db
