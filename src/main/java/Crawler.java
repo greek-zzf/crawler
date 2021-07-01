@@ -151,7 +151,6 @@ public class Crawler {
         }
     }
 
-
     private static boolean isInterestingLink(String link) {
         return (isIndexPage(link) || isNewsPage(link)) && isNotLoginPage(link);
     }
