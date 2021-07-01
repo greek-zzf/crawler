@@ -120,6 +120,9 @@ public class Crawler {
         }
     }
 
+    private static boolean isNewsPage(String link) {
+        return link.contains("news.sina.cn");
+    }
 
     private static void storeIntoDatabaseIfItIsNewsPage(Document doc, Connection connection) throws SQLException {
         Elements articleTag = doc.select("article");
