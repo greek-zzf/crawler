@@ -128,10 +128,9 @@ public class Crawler {
         Elements articleTag = doc.select("article");
         if (!articleTag.isEmpty()) {
             for (Element element : articleTag) {
-//                try (PreparedStatement statement = connection.prepareStatement("insert into news (title) value (?)")) {
-//                    statement.setString(1, element.child(0).text());
-//                    statement.executeUpdate();
-//                }
+                try (PreparedStatement statement = connection.prepareStatement("insert into news (title) value (?)")) {
+                    statement.executeUpdate();
+                }
                 System.out.println(element.child(0).text());
             }
         }
@@ -160,10 +159,6 @@ public class Crawler {
 
     private static boolean isNotLoginPage(String link) {
         return !link.contains("passport.sina.cn");
-    }
-
-    private static boolean isNewsPage(String link) {
-        return link.contains("news.sina.cn");
     }
 
     private static boolean isIndexPage(String link) {
