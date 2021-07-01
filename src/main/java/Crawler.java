@@ -24,7 +24,9 @@ import java.util.Set;
 public class Crawler {
 
     private static List<String> linkPool = null;
-    private static final Set<String> processed_Links = new HashSet<>();
+
+    private static final String USER_NAME = "root";
+    private static final String PASSWORD = "root";
 
 
     private static List<String> loadUrlsFromDatabase(Connection connection, String sql) throws SQLException {
@@ -32,15 +34,14 @@ public class Crawler {
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             ResultSet resultSet = statement.executeQuery();
             while (resultSet.next()) {
-                System.out.println(resultSet.getString("1"));
-                results.add(resultSet.getString("1"));
+                results.add(resultSet.getString("link"));
             }
         }
         return results;
     }
 
     public static void main(String[] args) throws IOException, SQLException {
-        Connection connection = DriverManager.getConnection("jdbc:h2:file:./news", "root", "root");
+        Connection connection = DriverManager.getConnection("jdbc:h2:file:./news", USER_NAME, PASSWORD);
 
         // 从数据库中获取需要处理的链接
         linkPool = loadUrlsFromDatabase(connection, "SELECT link FROM LINKS_TO_BE_PROCESSED");
@@ -56,49 +57,27 @@ public class Crawler {
 
             // 删除已经处理（包括数据库）的链接
             String link = linkPool.remove(linkPool.size() - 1);
-            try (PreparedStatement statement = connection.prepareStatement("DELETE FROM LINKS_TO_BE_PROCESSED WHERE link = ?")) {
-                statement.setString(1, link);
-                statement.executeUpdate();
-            }
-
+            deleteLinkFromDatabase(connection, link, "DELETE FROM LINKS_TO_BE_PROCESSED WHERE link = ?");
 
             // 判断链接是否被处理
-
-            boolean isProcessed = false;
-            List<String> results = new ArrayList<>();
-            try (PreparedStatement statement = connection.prepareStatement("SELECT link FORM LINKS_ALREADY_PROCESSED WHERE link = ?")) {
-                statement.setString(1, link);
-                ResultSet resultSet = statement.executeQuery();
-                while (resultSet.next()) {
-                    isProcessed = true;
-                }
+            if (isLinkProcessed(connection, link)) {
+                continue;
             }
 
             // 如果不是处理过的链接
-            if (!isProcessed && isInterestingLink(link)) {
-
+            if (isInterestingLink(link)) {
 
                 Document doc = httpGetAndParseHtml(link);
+
                 // 添加链接到链接池中（包括数据库）
-                for (Element element : doc.select("a[href]")) {
-                    linkPool.add(element.attr("href"));
-                    try (PreparedStatement statement = connection.prepareStatement("INSERT INTO LINKS_TO_BE_PROCESSED (link) VALUES(?)")) {
-                        statement.setString(1, link);
-                        statement.executeUpdate();
-                    }
-                }
+                parseUrlsfromPageAndStoreIntoDatabase(connection, link, doc);
 
                 // 如果是新闻页面就插入到数据库
-                storeIntoDatabaseIfItIsNewsPage(doc);
-
+                storeIntoDatabaseIfItIsNewsPage(doc, connection);
 
                 // 处理完成的链接放到已处理的池子中(包括数据库)
-
-                processed_Links.add(link);
-                try (PreparedStatement statement = connection.prepareStatement("INSERT INTO LINKS_ALREADY_PROCESSED (link) VALUES(?)")) {
-                    statement.setString(1, link);
-                    statement.executeUpdate();
-                }
+                processedLink.add(link);
+                insertIntoDatabase(connection, link, "INSERT INTO LINKS_ALREADY_PROCESSED (link) VALUES(?)");
 
             }
 
@@ -108,11 +87,48 @@ public class Crawler {
 
     }
 
+    private static void deleteLinkFromDatabase(Connection connection, String link, String s) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(s)) {
+            statement.setString(1, link);
+            statement.executeUpdate();
+        }
+    }
 
-    private static void storeIntoDatabaseIfItIsNewsPage(Document doc) {
+    private static void parseUrlsfromPageAndStoreIntoDatabase(Connection connection, String link, Document doc) throws SQLException {
+        for (Element element : doc.select("a[href]")) {
+            linkPool.add(element.attr("href"));
+            insertIntoDatabase(connection, link, "INSERT INTO LINKS_TO_BE_PROCESSED (link) VALUES(?)");
+        }
+    }
+
+    private static boolean isLinkProcessed(Connection connection, String link) throws SQLException {
+
+        try (PreparedStatement statement = connection.prepareStatement("SELECT link FROM LINKS_ALREADY_PROCESSED WHERE link = ?")) {
+            statement.setString(1, link);
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void insertIntoDatabase(Connection connection, String link, String sql) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, link);
+            statement.executeUpdate();
+        }
+    }
+
+
+    private static void storeIntoDatabaseIfItIsNewsPage(Document doc, Connection connection) throws SQLException {
         Elements articleTag = doc.select("article");
         if (!articleTag.isEmpty()) {
             for (Element element : articleTag) {
+//                try (PreparedStatement statement = connection.prepareStatement("insert into news (title) value (?)")) {
+//                    statement.setString(1, element.child(0).text());
+//                    statement.executeUpdate();
+//                }
                 System.out.println(element.child(0).text());
             }
         }
