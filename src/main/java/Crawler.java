@@ -13,11 +13,13 @@ import org.jsoup.select.Elements;
 import java.io.IOException;
 import java.sql.*;
 
+
 /**
  * @author Zhouzf
  * @date 2021-6-21
  */
 public class Crawler {
+
 
     private static final String USER_NAME = "root";
     private static final String PASSWORD = "root";
@@ -32,6 +34,7 @@ public class Crawler {
         }
         return null;
     }
+
 
     public static void main(String[] args) throws IOException, SQLException {
         Connection connection = DriverManager.getConnection("jdbc:h2:file:./news", USER_NAME, PASSWORD);
@@ -52,7 +55,9 @@ public class Crawler {
                 Document doc = httpGetAndParseHtml(link);
 
                 // 添加链接到链接池中（包括数据库）
+
                 parseUrlsFromPageAndStoreIntoDatabase(connection, doc);
+
 
                 // 如果是新闻页面就插入到数据库
                 storeIntoDatabaseIfItIsNewsPage(doc, connection);
@@ -60,11 +65,13 @@ public class Crawler {
                 // 处理完成的链接放数据库
                 updateDatabase(connection, link, "INSERT INTO LINKS_ALREADY_PROCESSED (link) VALUES(?)");
 
+
             }
         }
 
 
     }
+
 
     private static String getNextLinkThenDelete(Connection connection) throws SQLException {
         // 从数据库中获取需要处理的链接,然后删除
@@ -95,6 +102,7 @@ public class Crawler {
         return false;
     }
 
+
     private static void updateDatabase(Connection connection, String link, String sql) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, link);
@@ -110,9 +118,11 @@ public class Crawler {
         Elements articleTag = doc.select("article");
         if (!articleTag.isEmpty()) {
             for (Element element : articleTag) {
+
 //                try (PreparedStatement statement = connection.prepareStatement("insert into news (title) value (?)")) {
 //                    statement.executeUpdate();
 //                }
+
                 System.out.println(element.child(0).text());
             }
         }
