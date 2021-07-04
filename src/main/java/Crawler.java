@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
  */
 public class Crawler {
 
-
     private CrawlerDao dao = new JdbcCrawlerDao();
 
     private void run() throws SQLException, IOException {
@@ -68,7 +67,6 @@ public class Crawler {
             if (!link.toLowerCase().startsWith("javascript")) {
                 dao.updateDatabase(link, "INSERT INTO LINKS_TO_BE_PROCESSED (link) VALUES(?)");
             }
-
         }
     }
 
