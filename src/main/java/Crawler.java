@@ -78,9 +78,7 @@ public class Crawler {
             for (Element element : articleTag) {
                 String title = element.child(0).text();
                 String content = element.select("p").stream().map(Element::text).collect(Collectors.joining("\n"));
-
                 dao.insertIntoDatabase(title, content, link);
-
             }
         }
     }
