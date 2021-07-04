@@ -12,6 +12,7 @@ import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.sql.*;
+import java.util.stream.Collectors;
 
 
 /**
@@ -19,7 +20,6 @@ import java.sql.*;
  * @date 2021-6-21
  */
 public class Crawler {
-
 
     private static final String USER_NAME = "root";
     private static final String PASSWORD = "root";
@@ -60,7 +60,7 @@ public class Crawler {
 
 
                 // 如果是新闻页面就插入到数据库
-                storeIntoDatabaseIfItIsNewsPage(doc, connection);
+                storeIntoDatabaseIfItIsNewsPage(connection, doc, link);
 
                 // 处理完成的链接放数据库
                 updateDatabase(connection, link, "INSERT INTO LINKS_ALREADY_PROCESSED (link) VALUES(?)");
@@ -86,7 +86,10 @@ public class Crawler {
     private static void parseUrlsFromPageAndStoreIntoDatabase(Connection connection, Document doc) throws SQLException {
         for (Element element : doc.select("a[href]")) {
             String link = element.attr("href");
-            updateDatabase(connection, link, "INSERT INTO LINKS_TO_BE_PROCESSED (link) VALUES(?)");
+            if (!link.toLowerCase().startsWith("javascript")) {
+                updateDatabase(connection, link, "INSERT INTO LINKS_TO_BE_PROCESSED (link) VALUES(?)");
+            }
+
         }
     }
 
@@ -110,20 +113,22 @@ public class Crawler {
         }
     }
 
-    private static boolean isNewsPage(String link) {
-        return link.contains("news.sina.cn");
-    }
 
-    private static void storeIntoDatabaseIfItIsNewsPage(Document doc, Connection connection) throws SQLException {
+    private static void storeIntoDatabaseIfItIsNewsPage(Connection connection, Document doc, String link) throws SQLException {
         Elements articleTag = doc.select("article");
         if (!articleTag.isEmpty()) {
             for (Element element : articleTag) {
+                String title = element.child(0).text();
+                String content = element.select("p").stream().map(Element::text).collect(Collectors.joining("\n"));
 
-//                try (PreparedStatement statement = connection.prepareStatement("insert into news (title) value (?)")) {
-//                    statement.executeUpdate();
-//                }
+                try (PreparedStatement preparedStatement = connection.prepareStatement("insert into news (title, content, url, created_at, modified_at) values (?,?,?,now(),now())")) {
+                    preparedStatement.setString(1, title);
+                    preparedStatement.setString(2, content);
+                    preparedStatement.setString(3, link);
 
-                System.out.println(element.child(0).text());
+                    preparedStatement.executeUpdate();
+                }
+
             }
         }
     }
@@ -136,10 +141,7 @@ public class Crawler {
 
         try (CloseableHttpResponse response = httpclient.execute(httpGet)) {
             HttpEntity entity = response.getEntity();
-
             System.out.println(link);
-            System.out.println(response.getStatusLine());
-
             String html = EntityUtils.toString(entity);
             return Jsoup.parse(html);
         }
@@ -157,4 +159,7 @@ public class Crawler {
         return link.equals("https://sina.cn");
     }
 
+    private static boolean isNewsPage(String link) {
+        return link.contains("news.sina.cn");
+    }
 }

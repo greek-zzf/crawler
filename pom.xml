@@ -85,7 +85,7 @@
                 <artifactId>flyway-maven-plugin</artifactId>
                 <version>7.11.0</version>
                 <configuration>
-                    <url>jdbc:h2:file:./news</url>
+                    <url>jdbc:h2:file:C:/Users/Administrator/Desktop/github demo/crawler/news</url>
                     <user>root</user>
                     <password>root</password>
                 </configuration>
