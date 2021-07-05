@@ -2,8 +2,9 @@ version: 2
 jobs:
   build:
     branches:
-      ignore:
-        - mybatis-crawler
+      only:
+        - main
+        - work-feature
   test:
     docker:
       - image: circleci/openjdk:8u212-jdk-stretch
@@ -20,5 +21,5 @@ jobs:
 workflows:
   version: 2
   default:
-    jobs:
-      - test
+    jobs
+    - test

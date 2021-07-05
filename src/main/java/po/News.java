@@ -8,18 +8,26 @@ import java.time.Instant;
  */
 public class News {
 
-    private int id;
+    private Integer id;
     private String title;
     private String content;
     private String url;
     private Instant createdAt;
-    private String modifiedAt;
+    private Instant modifiedAt;
 
-    public int getId() {
+    public News(String title, String content, String url) {
+        this.title = title;
+        this.content = content;
+        this.url = url;
+        this.createdAt = createdAt;
+        this.modifiedAt = modifiedAt;
+    }
+
+    public Integer getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -55,13 +63,23 @@ public class News {
         this.createdAt = createdAt;
     }
 
-    public String getModifiedAt() {
+    public Instant getModifiedAt() {
         return modifiedAt;
     }
 
-    public void setModifiedAt(String modifiedAt) {
+    public void setModifiedAt(Instant modifiedAt) {
         this.modifiedAt = modifiedAt;
     }
 
-
+    @Override
+    public String toString() {
+        return "News{" +
+                "id=" + id +
+                ", title='" + title + '\'' +
+                ", content='" + content + '\'' +
+                ", url='" + url + '\'' +
+                ", createdAt=" + createdAt +
+                ", modifiedAt='" + modifiedAt + '\'' +
+                '}';
+    }
 }

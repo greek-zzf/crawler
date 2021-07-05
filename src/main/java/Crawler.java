@@ -1,5 +1,5 @@
 import dao.CrawlerDao;
-import dao.JdbcCrawlerDao;
+import dao.MybatisCrawlerDao;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -13,7 +13,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
-import java.sql.*;
+import java.sql.SQLException;
 import java.util.stream.Collectors;
 
 
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
  */
 public class Crawler {
 
-    private CrawlerDao dao = new JdbcCrawlerDao();
+    private CrawlerDao dao = new MybatisCrawlerDao();
 
     private void run() throws SQLException, IOException {
 
@@ -50,7 +50,7 @@ public class Crawler {
                 storeIntoDatabaseIfItIsNewsPage(doc, link);
 
                 // 处理完成的链接放数据库
-                dao.updateDatabase(link, "INSERT INTO LINKS_ALREADY_PROCESSED (link) VALUES(?)");
+                dao.insertProcessedLink(link);
             }
         }
     }
@@ -65,7 +65,7 @@ public class Crawler {
         for (Element element : doc.select("a[href]")) {
             String link = element.attr("href");
             if (!link.toLowerCase().startsWith("javascript")) {
-                dao.updateDatabase(link, "INSERT INTO LINKS_TO_BE_PROCESSED (link) VALUES(?)");
+                dao.insertLinkToBeProcessed(link);
             }
         }
     }

@@ -8,7 +8,8 @@ import po.News;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Zhouzf
@@ -20,42 +21,73 @@ public class MybatisCrawlerDao implements CrawlerDao {
 
     public MybatisCrawlerDao() {
         String resource = "db/mybatis/config.xml";
-        InputStream inputStream = null;
-        try {
-            inputStream = Resources.getResourceAsStream(resource);
+        try (InputStream inputStream = Resources.getResourceAsStream(resource)) {
+            sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+
     }
 
     @Override
-    public String getNextLinkThenDelete() throws SQLException {
+    public String getNextLinkThenDelete() {
+        try (SqlSession session = sqlSessionFactory.openSession(true)) {
+            String link = (String) session.selectOne("db.NewsMapper.selectNextAvailableLink");
+
+            if (link != null) {
+                session.delete("db.NewsMapper.deleteLink", link);
+            }
+            return link;
+        }
+    }
+
+    @Override
+    public String getNextLink(String sql) {
         try (SqlSession session = sqlSessionFactory.openSession()) {
-            News blog = (News) session.selectOne("org.mybatis.example.BlogMapper.selectBlog", 101);
+            News news = (News) session.selectOne("org.mybatis.example.BlogMapper.selectBlog", 101);
         }
 
-
         return null;
     }
 
     @Override
-    public String getNextLink(String sql) throws SQLException {
-        return null;
-    }
-
-    @Override
-    public void updateDatabase(String link, String sql) throws SQLException {
+    public void updateDatabase(String link, String sql) {
 
     }
 
     @Override
-    public void insertIntoDatabase(String title, String content, String link) throws SQLException {
-
+    public void insertIntoDatabase(String title, String content, String link) {
+        try (SqlSession session = sqlSessionFactory.openSession(true)) {
+            session.insert("db.NewsMapper.insertNews", new News(title, content, link));
+        }
     }
 
     @Override
-    public boolean isLinkProcessed(String link) throws SQLException {
-        return false;
+    public boolean isLinkProcessed(String link) {
+        try (SqlSession session = sqlSessionFactory.openSession()) {
+            int count = session.selectOne("db.NewsMapper.countLink", link);
+            return count != 0;
+        }
+    }
+
+    @Override
+    public void insertProcessedLink(String link) {
+        Map<String, String> param = new HashMap<>();
+        param.put("tableName", "LINKS_TO_BE_PROCESSED");
+        param.put("link", link);
+        try (SqlSession session = sqlSessionFactory.openSession(true)) {
+            session.insert("db.NewsMapper.insertLink", param);
+        }
+    }
+
+    @Override
+    public void insertLinkToBeProcessed(String link) {
+        Map<String, String> param = new HashMap<>();
+        param.put("tableName", "LINKS_ALREADY_PROCESSED");
+        param.put("link", link);
+        try (SqlSession session = sqlSessionFactory.openSession(true)) {
+            session.insert("db.NewsMapper.insertLink", param);
+        }
+
     }
 }
