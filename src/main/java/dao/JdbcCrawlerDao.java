@@ -30,26 +30,6 @@ public class JdbcCrawlerDao implements CrawlerDao {
     }
 
     @Override
-    public String getNextLink(String sql) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            ResultSet resultSet = statement.executeQuery();
-            while (resultSet.next()) {
-                return resultSet.getString("link");
-            }
-        }
-        return null;
-    }
-
-    @Override
-    public void updateDatabase(String link, String sql) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, link);
-            statement.executeUpdate();
-        }
-    }
-
-
-    @Override
     public void insertIntoDatabase(String title, String content, String link) throws SQLException {
         try (PreparedStatement preparedStatement = connection.prepareStatement("insert into news (title, content, url, created_at, modified_at) values (?,?,?,now(),now())")) {
             preparedStatement.setString(1, title);
@@ -58,8 +38,6 @@ public class JdbcCrawlerDao implements CrawlerDao {
 
             preparedStatement.executeUpdate();
         }
-
-
     }
 
     @Override
@@ -73,6 +51,34 @@ public class JdbcCrawlerDao implements CrawlerDao {
             }
         }
         return false;
+    }
+
+    @Override
+    public void insertProcessedLink(String link) throws SQLException {
+        updateDatabase(link, "insert into LINKS_ALREADY_PROCESSED (link) values(?)");
+    }
+
+    @Override
+    public void insertLinkToBeProcessed(String link) throws SQLException {
+        updateDatabase(link, "insert into LINKS_TO_BE_PROCESSED (link) values(?)");
+    }
+
+    private String getNextLink(String sql) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                return resultSet.getString("link");
+            }
+        }
+        return null;
+    }
+
+
+    private void updateDatabase(String link, String sql) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, link);
+            statement.executeUpdate();
+        }
     }
 
 

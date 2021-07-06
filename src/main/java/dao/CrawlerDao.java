@@ -9,12 +9,11 @@ import java.sql.SQLException;
 public interface CrawlerDao {
     String getNextLinkThenDelete() throws SQLException;
 
-    String getNextLink(String sql) throws SQLException;
-
-    void updateDatabase(String link, String sql) throws SQLException;
-
     void insertIntoDatabase(String title, String content, String link) throws SQLException;
 
     boolean isLinkProcessed(String link) throws SQLException;
 
+    void insertProcessedLink(String link) throws SQLException;
+
+    void insertLinkToBeProcessed(String link) throws SQLException;
 }
