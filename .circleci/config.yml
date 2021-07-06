@@ -16,5 +16,10 @@ jobs:
 workflows:
   version: 2
   default:
-    jobs
-    - test
+    jobs:
+      - test:
+          filters:
+            branches:
+              only:
+                - master
+                - work-feature
