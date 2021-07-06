@@ -61,12 +61,12 @@ public class MybatisOldCrawlerDao implements CrawlerDao {
 
     @Override
     public void insertProcessedLink(String link) {
-        insertLink(link,"LINKS_ALREADY_PROCESSED");
+        insertLink(link, "LINKS_ALREADY_PROCESSED");
     }
 
     @Override
     public void insertLinkToBeProcessed(String link) {
-        insertLink(link,"LINKS_TO_BE_PROCESSED");
+        insertLink(link, "LINKS_TO_BE_PROCESSED");
     }
 
     private void insertLink(String link, String tableName) {
