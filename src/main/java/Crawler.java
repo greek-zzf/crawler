@@ -1,5 +1,5 @@
 import dao.CrawlerDao;
-import dao.MybatisCrawlerDao;
+import dao.MybatisOldCrawlerDao;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
  */
 public class Crawler {
 
-    private CrawlerDao dao = new MybatisCrawlerDao();
+    private CrawlerDao dao = new MybatisOldCrawlerDao();
 
     private void run() throws SQLException, IOException {
 
