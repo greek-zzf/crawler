@@ -32,7 +32,7 @@ public class MybatisOldCrawlerDao implements CrawlerDao {
     }
 
     @Override
-    public String getNextLinkThenDelete() {
+    public synchronized String getNextLinkThenDelete() {
         try (SqlSession session = sqlSessionFactory.openSession(true)) {
             String link = (String) session.selectOne("mapper.NewsMapper.selectNextAvailableLink");
 

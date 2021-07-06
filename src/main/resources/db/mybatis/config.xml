@@ -6,16 +6,23 @@
     <environments default="development">
         <environment id="development">
             <transactionManager type="JDBC"/>
+            <!--      H2 数据库配置      -->
+            <!--            <dataSource type="POOLED">-->
+            <!--                <property name="driver" value="org.h2.Driver"/>-->
+            <!--                <property name="url" value="jdbc:h2:file:C:\Users\Administrator\Desktop\crawler\news"/>-->
+            <!--                <property name="username" value="root"/>-->
+            <!--                <property name="password" value="root"/>-->
+            <!--            </dataSource>-->
+
             <dataSource type="POOLED">
-                <property name="driver" value="org.h2.Driver"/>
-                <property name="url" value="jdbc:h2:file:C:\Users\Administrator\Desktop\crawler\news"/>
+                <property name="driver" value="com.mysql.cj.jdbc.Driver"/>
+                <property name="url" value="jdbc:mysql://127.0.0.1/news?useUnicode=true&amp;characterEncoding=UTF-8"/>
                 <property name="username" value="root"/>
-                <property name="password" value="root"/>
+                <property name="password" value="123456"/>
             </dataSource>
         </environment>
     </environments>
     <mappers>
         <mapper resource="db/mybatis/NewsMapper.xml"/>
-<!--        <mapper class="mapper.NewsMapper"/>-->
     </mappers>
 </configuration>
