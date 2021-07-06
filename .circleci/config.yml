@@ -11,10 +11,10 @@ jobs:
           name: Run Maven verify
           command: mvn clean test
       - save_cache: # saves the project dependencies
-          paths: ~/.m2
+          paths: [~/.m2]
           key: hcsp-{{ checksum "pom.xml" }}
 workflows:
   version: 2
   default:
-    jobs
+    jobs:
     - test
