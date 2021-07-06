@@ -20,7 +20,7 @@ public class JdbcCrawlerDao implements CrawlerDao {
 
 
     @Override
-    public String getNextLinkThenDelete() throws SQLException {
+    public synchronized String getNextLinkThenDelete() throws SQLException {
         // 从数据库中获取需要处理的链接,然后删除
         String link = getNextLink("SELECT LINK FROM LINKS_TO_BE_PROCESSED LIMIT 1");
         if (link != null) {
