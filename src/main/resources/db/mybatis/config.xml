@@ -13,7 +13,7 @@
             <!--                <property name="username" value="root"/>-->
             <!--                <property name="password" value="root"/>-->
             <!--            </dataSource>-->
-
+            <!--MySQL 数据库配置 -->
             <dataSource type="POOLED">
                 <property name="driver" value="com.mysql.cj.jdbc.Driver"/>
                 <property name="url" value="jdbc:mysql://127.0.0.1/news?useUnicode=true&amp;characterEncoding=UTF-8"/>
