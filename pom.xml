@@ -101,6 +101,7 @@
                 <!--                    <user>root</user>-->
                 <!--                    <password>root</password>-->
                 <!--                </configuration>-->
+
                 <!--MySQL 数据库配置 -->
                 <configuration>
                     <url>jdbc:mysql://127.0.0.1/news?useUnicode=true&amp;characterEncoding=UTF-8</url>
